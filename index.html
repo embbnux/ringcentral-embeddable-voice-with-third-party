@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+  // Add widget
+  (function() {
+    var rcs = document.createElement("script");
+    rcs.src = "https://ringcentral.github.io/ringcentral-embeddable-voice/adapter.js";
+    var rcs0 = document.getElementsByTagName("script")[0];
+    rcs0.parentNode.insertBefore(rcs, rcs0);
+  })();
+</script>
+<script>
+  // Register your service
+  function registerService() {
+    document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
+      type: 'rc-adapter-register-third-party-service',
+      service: {
+        name: 'TestService',
+        conferenceInvitePath: '/conference/invite',
+        conferenceInviteTitle: 'Invite with TestService',
+        contactsPath: '/contacts',
+        contactSearchPath: '/contacts/search',
+        contactMatchPath: '/contacts/match',
+        activitiesPath: '/activities',
+        activityPath: '/activity'
+      }
+    }, '*');
+  }
+
+  // Function to response message to widget
+  function responseMessage(request, response) {
+    console.log(request);
+    document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
+      type: 'rc-post-message-response',
+      responseId: request.requestId,
+      response,
+    }, '*');
+  }
+
+  function inviteConference(request) {
+    responseMessage(request, { data: 'ok' });
+  }
+
+  function getContacts(request) {
+    responseMessage(request, {
+      data: [{
+        id: '123456',
+        name: 'TestService Name',
+        type: 'TestService',
+        phoneNumbers: [{
+          phoneNumber: '+16579991394',
+          phoneType: 'directPhone',
+        }]
+      }]
+    });
+  }
+
+  function searchContacts(request) {
+    responseMessage(request, {
+      data: [{
+        id: '123456',
+        name: 'TestService Name',
+        type: 'TestService Name',
+        phoneNumbers: [{
+          phoneNumber: '+16579991394',
+          phoneType: 'directPhone',
+        }]
+      }]
+    });
+  }
+
+  function matchContacts(request) {
+    responseMessage(request, {
+      data: {
+        '+12165325078': [
+          {
+            entityType: 'TestService',
+            name: 'TestService 1',
+            phoneNumbers: [{
+              phoneNumber: '+12165325078',
+              phoneType: 'directPhone',
+            }]
+          }
+        ]
+      }
+    });
+  }
+
+  function getActivities(request) {
+    responseMessage(request, {
+      data: [{
+        id: '123',
+        subject: 'Title',
+        time: 1528854702472
+      }]
+    });
+  }
+
+  function getActivity(request) {
+    responseMessage(request, { data: 'ok' });
+  }
+
+  // Add message event to response to the widget
+  window.addEventListener('message', function (e) {
+    var data = e.data;
+    if (data && data.type === 'rc-post-message-request') {
+      if (data.path === '/contacts') {
+        getContacts(data);
+      }
+      if (data.path === '/activities') {
+        getActivities(data)
+      }
+      if (data.path === '/activity') {
+        getActivity(data);
+      }
+      if (data.path === '/contacts/search') {
+        searchContacts(data);
+      }
+      if (data.path === '/contacts/match') {
+        matchContacts(data);
+      }
+      if (data.path === '/conference/invite') {
+        inviteConference(data);
+      }
+    }
+  });
+
+  // To register the widget when it is ready.
+  var registered = false;
+  window.addEventListener('message', function (e) {
+    const data = e.data;
+    if (data && data.type === 'rc-adapter-pushAdapterState' && registered === false) {
+      registered = true;
+      registerService();
+    }
+  })
+</script>
+</body>
+</html>
