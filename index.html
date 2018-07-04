@@ -23,7 +23,9 @@
         contactSearchPath: '/contacts/search',
         contactMatchPath: '/contacts/match',
         activitiesPath: '/activities',
-        activityPath: '/activity'
+        activityPath: '/activity',
+        callLoggerPath: '/callLogger',
+        callLoggerTitle: 'Log to TestService'
       }
     }, '*');
   }
@@ -101,6 +103,12 @@
     responseMessage(request, { data: 'ok' });
   }
 
+  function logCall(request) {
+    // Log call here
+    console.log('Log call');
+    responseMessage(request, { data: 'ok' });
+  }
+
   // Add message event to response to the widget
   window.addEventListener('message', function (e) {
     var data = e.data;
@@ -122,6 +130,9 @@
       }
       if (data.path === '/conference/invite') {
         inviteConference(data);
+      }
+      if (data.path === '/callLogger') {
+        logCall(data);
       }
     }
   });
