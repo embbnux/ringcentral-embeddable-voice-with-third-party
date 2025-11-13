@@ -11,9 +11,9 @@
   })();
 </script>
 <script>
-  // Register your service
+  console.log("[RingCentral App] Override is active!");
   function registerService() {
-    document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
+    document.getElementsByTagName("iframe")[0].contentWindow.postMessage({
       type: 'rc-adapter-register-third-party-service',
       service: {
         name: 'TestService',
@@ -25,7 +25,9 @@
         activitiesPath: '/activities',
         activityPath: '/activity',
         callLoggerPath: '/callLogger',
-        callLoggerTitle: 'Log to TestService'
+        callLoggerTitle: 'Log to TestService',
+        callLogEntityMatcherPath: "/callLogger/match",
+        recordingWithToken: 1,
       }
     }, '*');
   }
@@ -33,7 +35,7 @@
   // Function to response message to widget
   function responseMessage(request, response) {
     console.log(request);
-    document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
+    document.getElementsByTagName("iframe")[0].contentWindow.postMessage({
       type: 'rc-post-message-response',
       responseId: request.requestId,
       response,
@@ -109,8 +111,26 @@
     responseMessage(request, { data: 'ok' });
   }
 
+  function matchCallLog(request) {
+    console.log('Match call log');
+    let payload = {};
+
+    if (request && request.body && request.body.sessionIds) {
+      request.body.sessionIds.forEach(sessionId => {
+        let items = [{
+          id: sessionId,
+          note: "some note",
+        }];
+        payload[sessionId] = items;
+      });
+    }
+
+    responseMessage(request, { data: payload });
+  }
+
   // Add message event to response to the widget
   window.addEventListener('message', function (e) {
+    console.log("[RingCentral App] Received post message:", e.data);
     var data = e.data;
     if (data && data.type === 'rc-post-message-request') {
       if (data.path === '/contacts') {
@@ -133,6 +153,9 @@
       }
       if (data.path === '/callLogger') {
         logCall(data);
+      }
+      if (data.path === '/callLogger/match') {
+        matchCallLog(data);
       }
     }
   });
