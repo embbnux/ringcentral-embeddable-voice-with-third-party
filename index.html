@@ -106,8 +106,110 @@
   }
 
   function logCall(request) {
-    // Log call here
-    console.log('Log call');
+    // Log call event here
+    console.log('Log call event', request);
+    // Get trigger type: data.body.triggerType
+    // When user click log button in call item, triggerType is 'createLog' or 'editLog'
+    // When it is triggered from auto log, triggerType is 'presenceUpdate'
+    // When save button clicked, triggerType is 'logForm'
+    if (request.body.triggerType === 'createLog' || request.body.triggerType === 'editLog') {
+      // customize call log page
+      document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
+        type: 'rc-adapter-update-call-log-page',
+        page: {
+          title: 'Log to TestService',
+          // schema and uiSchema are used to customize call log page, api is the same as [jsonschema-page](https://ringcentral.github.io/ringcentral-embeddable/jsonschema-page/?path=/docs/readme--docs)
+          schema: {
+            type: 'object',
+            required: ['contact', 'activityTitle'],
+            properties: {
+              "warning": {
+                "type": "string",
+                "description": "No contact found. Enter a name to have a placeholder contact made for you.",
+              },
+              "contact": {
+                "title": "Contact",
+                "type": "string",
+                "oneOf": [
+                  {
+                    "const": "xxx",
+                    "title": "John Doe",
+                    "description": "Candidate - 347",
+                  },
+                  {
+                    "const": "newEntity",
+                    "title": "Create placeholder contact"
+                  }
+                ],
+              },
+              "contactName": {
+                "type": 'string',
+                "title": "Contact name",
+              },
+              "contactType": {
+                "title": "Contact type",
+                "type": "string",
+                "oneOf": [
+                  {
+                    "const": "candidate",
+                    "title": "Candidate"
+                  },
+                  {
+                    "const": "contact",
+                    "title": "Contact"
+                  }
+                ],
+              },
+              "activityTitle": {
+                "type": "string",
+                "title": "Activity title"
+              },
+              "note": {
+                "type": "string",
+                "title": "Note"
+              },
+            },
+          },
+          uiSchema: {
+            warning: {
+              "ui:field": "admonition", // or typography to show raw text
+              "ui:severity": "warning", // "warning", "info", "error", "success"
+            },
+            contactName: {
+              "ui:placeholder": 'Enter name',
+              "ui:widget": "hidden", // remove this line to show contactName input
+            },
+            contactType: {
+              "ui:placeholder": 'Select contact type',
+              "ui:widget": "hidden", // remove this line to show contactType input
+            },
+            note: {
+              "ui:placeholder": 'Enter note',
+              "ui:widget": "textarea", // show note input as textarea
+            },
+            submitButtonOptions: {
+              submitText: 'Save',
+            },
+          },
+          formData: {
+            contact: 'xxx',
+            contactName: '',
+            contactType: '',
+            activityTitle: 'Outbound call to ...',
+            note: '',
+          },
+        },
+      }, '*');
+      // navigate to call log page
+      document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
+        type: 'rc-adapter-navigate-to',
+        path: `/log/call/${request.body.call.sessionId}`,
+      }, '*');
+    }
+    if (request.body.triggerType === 'logForm' || request.body.triggerType === 'presenceUpdate') {
+      // Save call log to your platform
+      console.log('Log call to your platform', request.body); // request.body.call, request.body.formData
+    }
     responseMessage(request, { data: 'ok' });
   }
 
