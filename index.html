@@ -112,7 +112,12 @@
     // When user click log button in call item, triggerType is 'createLog' or 'editLog'
     // When it is triggered from auto log, triggerType is 'presenceUpdate'
     // When save button clicked, triggerType is 'logForm'
-    if (request.body.triggerType === 'createLog' || request.body.triggerType === 'editLog') {
+    // when there are call log updated (recording generated), triggerType is 'callLogSync'
+    if (
+      request.body.triggerType === 'createLog' ||
+      request.body.triggerType === 'editLog' ||
+      (request.body.triggerType === 'presenceUpdate' && request.body.call.result === 'Disconnected')
+    ) {
       // customize call log page
       document.querySelector("#rc-widget-adapter-frame").contentWindow.postMessage({
         type: 'rc-adapter-update-call-log-page',
@@ -206,7 +211,7 @@
         path: `/log/call/${request.body.call.sessionId}`,
       }, '*');
     }
-    if (request.body.triggerType === 'logForm' || request.body.triggerType === 'presenceUpdate') {
+    if (request.body.triggerType === 'logForm' || request.body.triggerType === 'callLogSync') {
       // Save call log to your platform
       console.log('Log call to your platform', request.body); // request.body.call, request.body.formData
     }
